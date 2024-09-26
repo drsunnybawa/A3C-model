@@ -1,0 +1,110 @@
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+# Function to classify EPIO score significance
+def classify_epio_score(epio_score):
+    if epio_score < 95:
+        return "Least Significant"
+    elif 95 <= epio_score <= 105:
+        return "Moderately Significant"
+    else:
+        return "Significant"
+
+# Function to predict if a B-School is a good target for SimVenture
+def predict_good_target(epio_score, curriculum_flexibility, institution_type, budget_sensitivity, tech_infrastructure, global_partnerships, past_tech_adoption, model):
+    # Convert EPIO score to significance level
+    epio_significance = classify_epio_score(epio_score)
+
+    # Input data in the correct format
+    input_data = pd.DataFrame({
+        'EPIO_Significance': [epio_significance],
+        'Curriculum_Flexibility': [curriculum_flexibility],
+        'Institution_Type': [institution_type],
+        'Budget_Sensitivity': [budget_sensitivity],
+        'Technical_Infrastructure': [tech_infrastructure],
+        'Global_Partnerships': [global_partnerships],
+        'Past_Tech_Adoption': [past_tech_adoption]
+    })
+
+    # Encode categorical variable 'EPIO_Significance'
+    input_data = pd.get_dummies(input_data, columns=['EPIO_Significance'], drop_first=True)
+
+    # Align with the training set (in case some columns are missing in the test input)
+    input_data = input_data.reindex(columns=X.columns, fill_value=0)
+
+    # Make prediction on input data
+    prediction = model.predict(input_data)
+
+    return "Good Target" if prediction[0] == 1 else "Not a Good Target"
+
+# Dummy data for training (in real case, replace with actual training data)
+data = {
+    'EPIO_Score': [110, 92, 100, 105, 95, 94, 99, 105, 109, 92],
+    'Curriculum_Flexibility': [1, 0, 1, 0, 1, 1, 1, 0, 0, 1],
+    'Institution_Type': [1, 0, 1, 0, 1, 1, 1, 0, 0, 1],
+    'Budget_Sensitivity': [0, 1, 0, 1, 0, 0, 0, 1, 1, 0],
+    'Technical_Infrastructure': [1, 1, 1, 0, 1, 1, 1, 0, 0, 1],
+    'Global_Partnerships': [1, 0, 1, 0, 1, 1, 1, 0, 0, 1],
+    'Past_Tech_Adoption': [1, 0, 1, 0, 1, 1, 1, 0, 0, 1],
+    'Good_Target': [1, 0, 1, 0, 1, 1, 1, 0, 0, 1]
+}
+
+# Classify EPIO scores and add a new column for EPIO significance level
+df = pd.DataFrame(data)
+df['EPIO_Significance'] = df['EPIO_Score'].apply(classify_epio_score)
+
+# Drop the original EPIO_Score as we're using the significance level instead
+df = df.drop(columns='EPIO_Score')
+
+# One-hot encode the 'EPIO_Significance' column
+df = pd.get_dummies(df, columns=['EPIO_Significance'], drop_first=True)
+
+# Define input (X) and output (y) variables
+X = df.drop(columns='Good_Target')
+y = df['Good_Target']
+
+# Split the dataset into training and testing sets (80% train, 20% test)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Create and train the Random Forest model
+model = RandomForestClassifier(random_state=42)
+model.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = model.predict(X_test)
+
+# Calculate the accuracy
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Model Accuracy: {accuracy * 100:.2f}%")
+
+# Get user input interactively
+def get_user_input():
+    print("Enter the following details for the B-School:\n")
+
+    # Prompt the user for each input value
+    epio_score = float(input("EPIO Score (80-111): "))
+    curriculum_flexibility = int(input("Curriculum Flexibility (1 for Flexible, 0 for Not): "))
+    institution_type = int(input("Institution Type (1 for Private, 0 for Public): "))
+    budget_sensitivity = int(input("Budget Sensitivity (1 for Sensitive, 0 for Not): "))
+    tech_infrastructure = int(input("Technical Infrastructure (1 for Good, 0 for Poor): "))
+    global_partnerships = int(input("Global Partnerships (1 for Strong, 0 for Weak): "))
+    past_tech_adoption = int(input("Past Tech Adoption (1 for Yes, 0 for No): "))
+a
+    # Return inputs in the correct format
+    return (epio_score, curriculum_flexibility, institution_type, budget_sensitivity, tech_infrastructure, global_partnerships, past_tech_adoption)
+
+# Run the prediction model
+if __name__ == "__main__":
+    # Print the accuracy of the model
+    print(f"\nModel trained with accuracy: {accuracy * 100:.2f}%\n")
+
+    # Get input values from the user
+    inputs = get_user_input()
+
+    # Pass the inputs to the prediction function
+    result = predict_good_target(*inputs, model=model)
+
+    # Output the result
+    print("\nPrediction: The B-School is a", result)
